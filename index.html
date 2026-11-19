@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>The Skyline: game lái xe thế giới mở</title>
+<meta name="description" content="The Skyline là game 3D thế giới mở viết bằng Rust. Lái ô tô, xe máy, máy bay và xe tăng quanh một thành phố.">
+<style>
+  :root {
+    --bg: #0d1117;
+    --panel: #161b22;
+    --line: #30363d;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --accent: #58a6ff;
+    --accent2: #f0b429;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: "Segoe UI", system-ui, Arial, sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+  }
+  a { color: var(--accent); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .wrap { max-width: 1080px; margin: 0 auto; padding: 0 20px; }
+
+  header {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(13, 17, 23, 0.9);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--line);
+  }
+  header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
+  .logo { font-weight: 800; letter-spacing: 1px; color: var(--text); }
+  .logo span { color: var(--accent2); }
+  nav a { color: var(--muted); margin-left: 20px; font-size: 14px; }
+  nav a:hover { color: var(--text); text-decoration: none; }
+
+  .hero {
+    min-height: 88vh;
+    display: flex; align-items: center;
+    background:
+      linear-gradient(180deg, rgba(13,17,23,0.2) 0%, var(--bg) 100%),
+      linear-gradient(135deg, #1b2a4a 0%, #0d1117 60%, #2b1d0e 100%);
+    position: relative; overflow: hidden;
+  }
+  .hero::before {
+    content: ""; position: absolute; inset: 0;
+    background-image:
+      linear-gradient(rgba(88,166,255,0.07) 1px, transparent 1px),
+      linear-gradient(90deg, rgba(88,166,255,0.07) 1px, transparent 1px);
+    background-size: 60px 60px;
+    transform: perspective(500px) rotateX(55deg) translateY(-20%);
+    transform-origin: center bottom;
+    opacity: 0.6;
+  }
+  .hero .wrap { position: relative; }
+  .tag {
+    display: inline-block; padding: 4px 12px; border: 1px solid var(--line);
+    border-radius: 999px; font-size: 13px; color: var(--muted); margin-bottom: 18px;
+  }
+  .hero h1 { font-size: clamp(40px, 7vw, 72px); line-height: 1.05; font-weight: 800; }
+  .hero h1 span { color: var(--accent2); }
+  .hero p { font-size: 18px; color: var(--muted); max-width: 620px; margin: 18px 0 30px; }
+
+  .btn {
+    display: inline-block; padding: 12px 24px; border-radius: 8px;
+    font-weight: 600; font-size: 15px; border: 1px solid transparent;
+  }
+  .btn-primary { background: var(--accent2); color: #1a1200; }
+  .btn-primary:hover { filter: brightness(1.08); text-decoration: none; }
+  .btn-ghost { border-color: var(--line); color: var(--text); margin-left: 10px; }
+  .btn-ghost:hover { background: var(--panel); text-decoration: none; }
+
+  section { padding: 80px 0; border-top: 1px solid var(--line); }
+  section h2 { font-size: 32px; margin-bottom: 10px; }
+  section .lead { color: var(--muted); margin-bottom: 40px; max-width: 680px; }
+
+  .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
+  .card {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 24px;
+  }
+  .card .icon { font-size: 28px; margin-bottom: 10px; }
+  .card h3 { font-size: 18px; margin-bottom: 8px; }
+  .card p { color: var(--muted); font-size: 15px; }
+
+  .controls { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
+  .key {
+    display: flex; justify-content: space-between; align-items: center;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px;
+  }
+  kbd {
+    background: #21262d; border: 1px solid #484f58; border-bottom-width: 3px;
+    border-radius: 6px; padding: 3px 9px; font-family: Consolas, monospace; font-size: 13px;
+    color: var(--text); white-space: nowrap;
+  }
+  .key span { color: var(--muted); font-size: 14px; text-align: right; }
+
+  .vehicles { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .vehicle { border-left: 4px solid var(--accent); }
+  .vehicle.bike { border-left-color: #3fb950; }
+  .vehicle.plane { border-left-color: #a371f7; }
+  .vehicle.tank { border-left-color: var(--accent2); }
+  .vehicle h3 { margin-bottom: 6px; }
+  .vehicle .where { font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+
+  .districts { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .district h3 { margin-bottom: 6px; }
+
+  .features ul { list-style: none; display: grid; gap: 12px; }
+  .features li::before { content: "▸ "; color: var(--accent2); }
+
+  .download { text-align: center; }
+  .download .box {
+    max-width: 640px; margin: 0 auto; padding: 40px 24px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
+  }
+  .download p { color: var(--muted); margin: 14px 0 26px; }
+  .req { margin-top: 18px; font-size: 14px; color: var(--muted); }
+
+  footer { border-top: 1px solid var(--line); padding: 30px 0; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+
+  @media (max-width: 640px) {
+    nav a { margin-left: 12px; font-size: 13px; }
+    .btn-ghost { margin-left: 0; margin-top: 10px; display: inline-block; }
+  }
+</style>
+</head>
+<body>
+
+<header>
+  <div class="wrap">
+    <div class="logo">THE <span>SKYLINE</span></div>
+    <nav>
+      <a href="#gioi-thieu">Giới thiệu</a>
+      <a href="#tinh-nang">Tính năng</a>
+      <a href="#dieu-khien">Điều khiển</a>
+      <a href="#tải-game">Tải game</a>
+    </nav>
+  </div>
+</header>
+
+<main>
+  <section class="hero" id="gioi-thieu" style="border-top:none">
+    <div class="wrap">
+      <div class="tag">Game 3D thế giới mở · Viết bằng Rust</div>
+      <h1>Lái mọi thứ.<br><span>Qua mọi thành phố.</span></h1>
+      <p>Ô tô, xe máy, máy bay và xe tăng trong một thành phố 3D sống động. Hộp số thật, tốc độ hiển thị trên UI, và những khu như sân bay, căn cứ quân sự, trạm xe đạp.</p>
+      <a class="btn btn-primary" href="#tải-game">Tải game</a>
+      <a class="btn btn-ghost" href="#tinh-nang">Xem tính năng</a>
+    </div>
+  </section>
+
+  <section id="tinh-nang">
+    <div class="wrap">
+      <h2>Tính năng</h2>
+      <p class="lead">Mỗi phương tiện có cách lái riêng, và thành phố có nhiều khu để khám phá.</p>
+      <div class="grid">
+        <div class="card"><div class="icon">🚗</div><h3>Hộp số 4 cấp</h3><p>Ô tô và xe máy có số tự động hoặc chuyển số bằng tay. Mỗi số có giới hạn tốc độ riêng.</p></div>
+        <div class="card"><div class="icon">✈️</div><h3>Máy bay</h3><p>Cất cánh từ sân bay, điều khiển bằng ga, ngóc đầu và nghiêng cánh. Cẩn thận khi hạ cánh.</p></div>
+        <div class="card"><div class="icon">🛡️</div><h3>Xe tăng</h3><p>Bắn đạn phá nhà. Mỗi tòa có máu riêng, và có thể bị sập theo từng phát pháo.</p></div>
+        <div class="card"><div class="icon">🏙️</div><h3>Thành phố sống động</h3><p>Nhà có cửa sổ và bóng đổ, xe NPC chạy trên đường, và minimap ở góc màn hình.</p></div>
+        <div class="card"><div class="icon">🎮</div><h3>Discord Rich Presence</h3><p>Trạng thái chơi hiển thị trên Discord: đang lái xe gì và tốc độ bao nhiêu.</p></div>
+        <div class="card"><div class="icon">⚡</div><h3>Nhẹ máy</h3><p>Viết bằng Rust và macroquad, chạy được trên card đồ họa tích hợp (OpenGL 3.3).</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Phương tiện</h2>
+      <p class="lead">Mỗi phương tiện xuất phát ở một khu riêng trong thành phố.</p>
+      <div class="vehicles">
+        <div class="card vehicle"><h3>Ô tô</h3><div class="where">Trung tâm thành phố</div><p>Phương tiện chính. Hộp số 4 cấp, tăng tốc nhanh ở số thấp.</p></div>
+        <div class="card vehicle bike"><h3>Xe máy</h3><div class="where">Trạm xe đạp công cộng (phía nam)</div><p>Nhanh và nhẹ, nghiêng người khi vào cua.</p></div>
+        <div class="card vehicle plane"><h3>Máy bay</h3><div class="where">Sân bay (phía tây)</div><p>Cất cánh trên đường băng, không có số, điều khiển bằng ga.</p></div>
+        <div class="card vehicle tank"><h3>Xe tăng</h3><div class="where">Căn cứ quân sự (phía đông)</div><p>Chậm nhưng bền. Bắn đạn phá nhà và công trình.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section>
+    <div class="wrap">
+      <h2>Các khu trong thành phố</h2>
+      <p class="lead">Ngoài các khu có phương tiện riêng, thành phố có năm công trình đặc biệt.</p>
+      <div class="districts">
+        <div class="card district"><h3>Trạm xá</h3><p>Thân trắng với dấu thập đỏ.</p></div>
+        <div class="card district"><h3>Đồn công an</h3><p>Biển xanh và cờ trên đỉnh.</p></div>
+        <div class="card district"><h3>Ngân hàng</h3><p>Thân đá với hàng cột phía trước.</p></div>
+        <div class="card district"><h3>Trạm cứu hỏa</h3><p>Tháp luyện tập và cửa garage.</p></div>
+        <div class="card district"><h3>Tạp hóa</h3><p>Nhà nhỏ với mái che xanh lá.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="dieu-khien">
+    <div class="wrap">
+      <h2>Điều khiển</h2>
+      <p class="lead">Mọi phím đều dùng được ngay từ đầu.</p>
+      <div class="controls">
+        <div class="key"><kbd>W</kbd><span>Ga / ngóc đầu (máy bay)</span></div>
+        <div class="key"><kbd>S</kbd><span>Phanh / cúi đầu (máy bay)</span></div>
+        <div class="key"><kbd>A</kbd> <kbd>D</kbd><span>Lái trái / phải</span></div>
+        <div class="key"><kbd>Space</kbd><span>Phanh tay</span></div>
+        <div class="key"><kbd>Shift</kbd> <kbd>Ctrl</kbd><span>Tăng / giảm ga máy bay</span></div>
+        <div class="key"><kbd>X</kbd> <kbd>Z</kbd><span>Lên số / xuống số</span></div>
+        <div class="key"><kbd>T</kbd><span>Bật / tắt số tự động</span></div>
+        <div class="key"><kbd>F</kbd><span>Bắn (xe tăng)</span></div>
+        <div class="key"><kbd>1</kbd>–<kbd>4</kbd> <kbd>Q</kbd> <kbd>E</kbd><span>Đổi phương tiện</span></div>
+        <div class="key"><kbd>R</kbd><span>Hồi phục phương tiện</span></div>
+        <div class="key"><kbd>Shift</kbd>+<kbd>D</kbd>+<kbd>F12</kbd><span>Bật / tắt dev mode</span></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="tải-game" class="download">
+    <div class="wrap">
+      <h2>Tải game</h2>
+      <div class="box">
+        <h3>The Skyline (Windows)</h3>
+        <p>Tải file <strong>theskyline.exe</strong> và chạy trực tiếp. Không cần cài thêm gì.</p>
+        <a class="btn btn-primary" href="https://github.com/MinhbaoGDVN/theskyline/releases">Tải bản mới nhất</a>
+        <a class="btn btn-ghost" href="https://github.com/MinhbaoGDVN/theskyline">Mã nguồn trên GitHub</a>
+        <div class="req">Yêu cầu: Windows 10/11, GPU hỗ trợ OpenGL 3.3 (đủ cho Intel HD 4000).</div>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>© MinhbaoGDVN · The Skyline</div>
+    <div><a href="https://github.com/MinhbaoGDVN/theskyline">GitHub</a></div>
+  </div>
+</footer>
+
+</body>
+</html>
