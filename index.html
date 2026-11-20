@@ -4,16 +4,19 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>The Skyline: game lái xe thế giới mở</title>
-<meta name="description" content="The Skyline là game 3D thế giới mở viết bằng Rust. Lái ô tô, xe máy, máy bay và xe tăng quanh một thành phố.">
+<meta name="description" content="The Skyline là game 3D thế giới mở viết bằng Rust. Lái ô tô, xe máy, máy bay và xe tăng quanh một thành phố phỏng theo Quận 1, TP.HCM.">
 <style>
   :root {
     --bg: #0d1117;
     --panel: #161b22;
+    --panel2: #1c2330;
     --line: #30363d;
     --text: #e6edf3;
     --muted: #8b949e;
     --accent: #58a6ff;
     --accent2: #f0b429;
+    --discord: #5865f2;
+    --green: #3fb950;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   html { scroll-behavior: smooth; }
@@ -21,7 +24,7 @@
     font-family: "Segoe UI", system-ui, Arial, sans-serif;
     background: var(--bg);
     color: var(--text);
-    line-height: 1.6;
+    line-height: 1.65;
   }
   a { color: var(--accent); text-decoration: none; }
   a:hover { text-decoration: underline; }
@@ -29,15 +32,17 @@
 
   header {
     position: sticky; top: 0; z-index: 10;
-    background: rgba(13, 17, 23, 0.9);
+    background: rgba(13, 17, 23, 0.92);
     backdrop-filter: blur(8px);
     border-bottom: 1px solid var(--line);
   }
   header .wrap { display: flex; align-items: center; justify-content: space-between; height: 60px; }
   .logo { font-weight: 800; letter-spacing: 1px; color: var(--text); }
   .logo span { color: var(--accent2); }
-  nav a { color: var(--muted); margin-left: 20px; font-size: 14px; }
+  nav a { color: var(--muted); margin-left: 18px; font-size: 14px; }
   nav a:hover { color: var(--text); text-decoration: none; }
+  nav a.dc { color: #fff; background: var(--discord); padding: 6px 12px; border-radius: 6px; }
+  nav a.dc:hover { filter: brightness(1.1); }
 
   .hero {
     min-height: 88vh;
@@ -64,20 +69,25 @@
   }
   .hero h1 { font-size: clamp(40px, 7vw, 72px); line-height: 1.05; font-weight: 800; }
   .hero h1 span { color: var(--accent2); }
-  .hero p { font-size: 18px; color: var(--muted); max-width: 620px; margin: 18px 0 30px; }
+  .hero p { font-size: 18px; color: var(--muted); max-width: 640px; margin: 18px 0 30px; }
+  .stats { display: flex; gap: 28px; flex-wrap: wrap; margin-top: 36px; }
+  .stats div { font-size: 14px; color: var(--muted); }
+  .stats b { display: block; font-size: 26px; color: var(--text); }
 
   .btn {
     display: inline-block; padding: 12px 24px; border-radius: 8px;
     font-weight: 600; font-size: 15px; border: 1px solid transparent;
   }
+  .btn:hover { text-decoration: none; filter: brightness(1.08); }
   .btn-primary { background: var(--accent2); color: #1a1200; }
-  .btn-primary:hover { filter: brightness(1.08); text-decoration: none; }
   .btn-ghost { border-color: var(--line); color: var(--text); margin-left: 10px; }
-  .btn-ghost:hover { background: var(--panel); text-decoration: none; }
+  .btn-ghost:hover { background: var(--panel); }
+  .btn-discord { background: var(--discord); color: #fff; margin-left: 10px; }
 
-  section { padding: 80px 0; border-top: 1px solid var(--line); }
+  section { padding: 84px 0; border-top: 1px solid var(--line); }
   section h2 { font-size: 32px; margin-bottom: 10px; }
-  section .lead { color: var(--muted); margin-bottom: 40px; max-width: 680px; }
+  section .lead { color: var(--muted); margin-bottom: 40px; max-width: 700px; font-size: 16px; }
+  .eyebrow { color: var(--accent2); font-size: 13px; letter-spacing: 2px; text-transform: uppercase; margin-bottom: 8px; }
 
   .grid { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); }
   .card {
@@ -86,10 +96,37 @@
   .card .icon { font-size: 28px; margin-bottom: 10px; }
   .card h3 { font-size: 18px; margin-bottom: 8px; }
   .card p { color: var(--muted); font-size: 15px; }
+  .card ul { color: var(--muted); font-size: 15px; padding-left: 18px; }
+  .card li { margin: 4px 0; }
+
+  .steps { counter-reset: s; display: grid; gap: 14px; }
+  .step {
+    display: grid; grid-template-columns: 56px 1fr; gap: 16px; align-items: start;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px;
+  }
+  .step .n {
+    width: 44px; height: 44px; border-radius: 50%; background: var(--panel2);
+    border: 1px solid var(--line); display: flex; align-items: center; justify-content: center;
+    font-weight: 800; color: var(--accent2);
+  }
+  .step h3 { font-size: 17px; margin-bottom: 4px; }
+  .step p { color: var(--muted); font-size: 15px; }
+
+  .vehicles { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .vehicle { border-left: 4px solid var(--accent); }
+  .vehicle.bike { border-left-color: var(--green); }
+  .vehicle.plane { border-left-color: #a371f7; }
+  .vehicle.tank { border-left-color: var(--accent2); }
+  .vehicle h3 { margin-bottom: 6px; }
+  .vehicle .where { font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+
+  .districts { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
+  .district h3 { margin-bottom: 6px; }
+  .tag-hcm { display: inline-block; font-size: 12px; color: var(--muted); border: 1px solid var(--line); border-radius: 6px; padding: 2px 8px; margin-top: 8px; }
 
   .controls { display: grid; gap: 10px; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); }
   .key {
-    display: flex; justify-content: space-between; align-items: center;
+    display: flex; justify-content: space-between; align-items: center; gap: 12px;
     background: var(--panel); border: 1px solid var(--line); border-radius: 10px; padding: 12px 16px;
   }
   kbd {
@@ -99,34 +136,62 @@
   }
   .key span { color: var(--muted); font-size: 14px; text-align: right; }
 
-  .vehicles { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-  .vehicle { border-left: 4px solid var(--accent); }
-  .vehicle.bike { border-left-color: #3fb950; }
-  .vehicle.plane { border-left-color: #a371f7; }
-  .vehicle.tank { border-left-color: var(--accent2); }
-  .vehicle h3 { margin-bottom: 6px; }
-  .vehicle .where { font-size: 13px; color: var(--accent); margin-bottom: 10px; }
+  .community {
+    background: linear-gradient(135deg, #20254a 0%, var(--panel) 60%);
+    border: 1px solid #3c4590; border-radius: 16px; padding: 40px; text-align: center;
+  }
+  .community h3 { font-size: 26px; margin-bottom: 10px; }
+  .community p { color: var(--muted); max-width: 620px; margin: 0 auto 26px; }
+  .community .btn { margin: 4px; }
 
-  .districts { display: grid; gap: 18px; grid-template-columns: repeat(auto-fit, minmax(230px, 1fr)); }
-  .district h3 { margin-bottom: 6px; }
+  .roadmap { display: grid; gap: 14px; }
+  .rm {
+    display: grid; grid-template-columns: 130px 1fr; gap: 16px;
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 18px 22px;
+  }
+  .rm .when { color: var(--accent2); font-weight: 700; }
+  .rm .done { color: var(--green); font-size: 13px; }
+  .rm ul { color: var(--muted); font-size: 15px; padding-left: 18px; }
 
-  .features ul { list-style: none; display: grid; gap: 12px; }
-  .features li::before { content: "▸ "; color: var(--accent2); }
+  .changelog { display: grid; gap: 14px; }
+  .ver {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px; padding: 20px 24px;
+  }
+  .ver h3 { font-size: 18px; margin-bottom: 4px; }
+  .ver .date { color: var(--muted); font-size: 13px; margin-bottom: 10px; }
+  .ver ul { color: var(--muted); font-size: 15px; padding-left: 18px; }
+
+  .specs { width: 100%; border-collapse: collapse; background: var(--panel); border-radius: 12px; overflow: hidden; }
+  .specs td, .specs th { padding: 14px 18px; border-bottom: 1px solid var(--line); text-align: left; font-size: 15px; }
+  .specs th { color: var(--muted); font-weight: 600; width: 32%; }
+  .specs tr:last-child td, .specs tr:last-child th { border-bottom: none; }
+
+  .faq details {
+    background: var(--panel); border: 1px solid var(--line); border-radius: 12px;
+    padding: 16px 22px; margin-bottom: 12px;
+  }
+  .faq summary { cursor: pointer; font-weight: 600; font-size: 16px; }
+  .faq details p { color: var(--muted); margin-top: 10px; font-size: 15px; }
 
   .download { text-align: center; }
   .download .box {
-    max-width: 640px; margin: 0 auto; padding: 40px 24px;
+    max-width: 680px; margin: 0 auto; padding: 44px 28px;
     background: var(--panel); border: 1px solid var(--line); border-radius: 14px;
   }
   .download p { color: var(--muted); margin: 14px 0 26px; }
   .req { margin-top: 18px; font-size: 14px; color: var(--muted); }
+  .warn { margin-top: 18px; font-size: 13px; color: var(--muted); }
 
-  footer { border-top: 1px solid var(--line); padding: 30px 0; color: var(--muted); font-size: 14px; }
-  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 10px; }
+  footer { border-top: 1px solid var(--line); padding: 36px 0; color: var(--muted); font-size: 14px; }
+  footer .wrap { display: flex; justify-content: space-between; flex-wrap: wrap; gap: 14px; }
+  footer .links a { margin-left: 16px; }
 
   @media (max-width: 640px) {
-    nav a { margin-left: 12px; font-size: 13px; }
-    .btn-ghost { margin-left: 0; margin-top: 10px; display: inline-block; }
+    nav a { margin-left: 10px; font-size: 13px; }
+    nav a.dc { padding: 5px 9px; }
+    .btn-ghost, .btn-discord { margin-left: 0; margin-top: 10px; display: inline-block; }
+    .rm { grid-template-columns: 1fr; }
+    .community { padding: 26px; }
   }
 </style>
 </head>
@@ -138,8 +203,11 @@
     <nav>
       <a href="#gioi-thieu">Giới thiệu</a>
       <a href="#tinh-nang">Tính năng</a>
+      <a href="#cach-choi">Cách chơi</a>
       <a href="#dieu-khien">Điều khiển</a>
-      <a href="#tải-game">Tải game</a>
+      <a href="#cong-dong">Cộng đồng</a>
+      <a href="#tai-game">Tải game</a>
+      <a class="dc" href="https://discord.gg/vuuuSrwRWw" target="_blank" rel="noopener">Discord</a>
     </nav>
   </div>
 </header>
@@ -147,32 +215,57 @@
 <main>
   <section class="hero" id="gioi-thieu" style="border-top:none">
     <div class="wrap">
-      <div class="tag">Game 3D thế giới mở · Viết bằng Rust</div>
+      <div class="tag">Game 3D thế giới mở · Viết bằng Rust · Phỏng theo Quận 1, TP.HCM</div>
       <h1>Lái mọi thứ.<br><span>Qua mọi thành phố.</span></h1>
-      <p>Ô tô, xe máy, máy bay và xe tăng trong một thành phố 3D sống động. Hộp số thật, tốc độ hiển thị trên UI, và những khu như sân bay, căn cứ quân sự, trạm xe đạp.</p>
-      <a class="btn btn-primary" href="#tải-game">Tải game</a>
+      <p>Ô tô, xe máy, máy bay và xe tăng trong một thành phố 3D sống động. Hộp số thật, bản đồ có đường chéo và vòng đường, các công trình quen thuộc như Nhà thờ Đức Bà và Bưu điện Thành phố.</p>
+      <a class="btn btn-primary" href="#tai-game">Tải game</a>
       <a class="btn btn-ghost" href="#tinh-nang">Xem tính năng</a>
+      <a class="btn btn-discord" href="https://discord.gg/vuuuSrwRWw" target="_blank" rel="noopener">Vào Discord</a>
+      <div class="stats">
+        <div><b>4</b>phương tiện</div>
+        <div><b>4</b>hộp số</div>
+        <div><b>40+</b>công trình</div>
+        <div><b>3</b>khu đặc biệt</div>
+      </div>
     </div>
   </section>
 
   <section id="tinh-nang">
     <div class="wrap">
-      <h2>Tính năng</h2>
+      <div class="eyebrow">Tính năng</div>
+      <h2>Có gì trong game</h2>
       <p class="lead">Mỗi phương tiện có cách lái riêng, và thành phố có nhiều khu để khám phá.</p>
       <div class="grid">
-        <div class="card"><div class="icon">🚗</div><h3>Hộp số 4 cấp</h3><p>Ô tô và xe máy có số tự động hoặc chuyển số bằng tay. Mỗi số có giới hạn tốc độ riêng.</p></div>
-        <div class="card"><div class="icon">✈️</div><h3>Máy bay</h3><p>Cất cánh từ sân bay, điều khiển bằng ga, ngóc đầu và nghiêng cánh. Cẩn thận khi hạ cánh.</p></div>
-        <div class="card"><div class="icon">🛡️</div><h3>Xe tăng</h3><p>Bắn đạn phá nhà. Mỗi tòa có máu riêng, và có thể bị sập theo từng phát pháo.</p></div>
-        <div class="card"><div class="icon">🏙️</div><h3>Thành phố sống động</h3><p>Nhà có cửa sổ và bóng đổ, xe NPC chạy trên đường, và minimap ở góc màn hình.</p></div>
+        <div class="card"><div class="icon">🚗</div><h3>Hộp số 4 cấp</h3><p>Ô tô và xe máy có số tự động hoặc chuyển số bằng tay. Mỗi số có giới hạn tốc độ riêng, nên phải lên số để chạy nhanh hơn.</p></div>
+        <div class="card"><div class="icon">✈️</div><h3>Máy bay</h3><p>Cất cánh từ sân bay, điều khiển bằng ga, ngóc đầu và nghiêng cánh. Lao xuống quá mạnh sẽ rơi, bấm R để hồi phục.</p></div>
+        <div class="card"><div class="icon">🛡️</div><h3>Xe tăng</h3><p>Bắn đạn phá nhà. Mỗi công trình có máu riêng và có thể sập sau vài phát pháo.</p></div>
+        <div class="card"><div class="icon">🏙️</div><h3>Thành phố sống động</h3><p>Nhà có cửa sổ và bóng đổ, đường có vạch kẻ, và xe NPC chạy trên mạng đường, rẽ ngẫu nhiên tại giao lộ.</p></div>
+        <div class="card"><div class="icon">🗺️</div><h3>Minimap</h3><p>Bản đồ nhỏ góc phải màn hình hiển thị đường, nhà, xe NPC và vị trí xe bạn đang lái.</p></div>
         <div class="card"><div class="icon">🎮</div><h3>Discord Rich Presence</h3><p>Trạng thái chơi hiển thị trên Discord: đang lái xe gì và tốc độ bao nhiêu.</p></div>
-        <div class="card"><div class="icon">⚡</div><h3>Nhẹ máy</h3><p>Viết bằng Rust và macroquad, chạy được trên card đồ họa tích hợp (OpenGL 3.3).</p></div>
+        <div class="card"><div class="icon">⚡</div><h3>Nhẹ máy</h3><p>Viết bằng Rust và macroquad, chạy được trên card đồ họa tích hợp (OpenGL 3.3), ví dụ Intel HD 4000.</p></div>
+        <div class="card"><div class="icon">📦</div><h3>Một file duy nhất</h3><p>Model, font và icon đều được nhúng sẵn trong exe, nên chỉ cần tải về và chạy, không cần thư mục đi kèm.</p></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cach-choi">
+    <div class="wrap">
+      <div class="eyebrow">Cách chơi</div>
+      <h2>Bắt đầu trong 4 bước</h2>
+      <p class="lead">Game không có nhiệm vụ bắt buộc. Bạn tự do lái đi đâu cũng được.</p>
+      <div class="steps">
+        <div class="step"><div class="n">1</div><div><h3>Chọn phương tiện</h3><p>Bấm 1–4 để đổi giữa ô tô, xe máy, máy bay và xe tăng. Mỗi phương tiện bắt đầu ở một khu riêng: ô tô ở trung tâm, xe máy ở trạm xe đạp phía nam, máy bay ở sân bay phía tây, xe tăng ở căn cứ phía đông.</p></div></div>
+        <div class="step"><div class="n">2</div><div><h3>Làm quen với hộp số</h3><p>Chế độ tự động là mặc định. Nếu muốn tự chuyển số, bấm X để lên và Z để xuống. Bấm T để bật lại tự động.</p></div></div>
+        <div class="step"><div class="n">3</div><div><h3>Khám phá thành phố</h3><p>Đi qua các khu đặc biệt: trạm xá, đồn công an, ngân hàng, trạm cứu hỏa, tạp hóa, cùng các công trình như Nhà thờ Đức Bà, Bưu điện Thành phố, Dinh Độc Lập, Chợ Bến Thành, Nhà hát Thành phố và Bitexco.</p></div></div>
+        <div class="step"><div class="n">4</div><div><h3>Thử sức với xe tăng</h3><p>Xe tăng bắn đạn phá nhà. Hãy thử bắn vào các công trình để xem chúng sập như thế nào.</p></div></div>
       </div>
     </div>
   </section>
 
   <section>
     <div class="wrap">
-      <h2>Phương tiện</h2>
+      <div class="eyebrow">Phương tiện</div>
+      <h2>Bốn phương tiện</h2>
       <p class="lead">Mỗi phương tiện xuất phát ở một khu riêng trong thành phố.</p>
       <div class="vehicles">
         <div class="card vehicle"><h3>Ô tô</h3><div class="where">Trung tâm thành phố</div><p>Phương tiện chính. Hộp số 4 cấp, tăng tốc nhanh ở số thấp.</p></div>
@@ -185,21 +278,27 @@
 
   <section>
     <div class="wrap">
-      <h2>Các khu trong thành phố</h2>
-      <p class="lead">Ngoài các khu có phương tiện riêng, thành phố có năm công trình đặc biệt.</p>
+      <div class="eyebrow">Bản đồ</div>
+      <h2>Thành phố phỏng theo Quận 1</h2>
+      <p class="lead">Bản đồ không phải lưới vuông. Có đại lộ chạy qua trung tâm, hai đường chéo giao nhau, một vòng đường bao quanh và các nhánh đi tới sân bay. Vị trí các công trình được phỏng theo bố cục Quận 1, không phải tọa độ thật.</p>
       <div class="districts">
-        <div class="card district"><h3>Trạm xá</h3><p>Thân trắng với dấu thập đỏ.</p></div>
-        <div class="card district"><h3>Đồn công an</h3><p>Biển xanh và cờ trên đỉnh.</p></div>
-        <div class="card district"><h3>Ngân hàng</h3><p>Thân đá với hàng cột phía trước.</p></div>
-        <div class="card district"><h3>Trạm cứu hỏa</h3><p>Tháp luyện tập và cửa garage.</p></div>
-        <div class="card district"><h3>Tạp hóa</h3><p>Nhà nhỏ với mái che xanh lá.</p></div>
+        <div class="card district"><h3>Nhà thờ Đức Bà</h3><p>Công trình cổ với tháp nhọn màu hồng, ở phía tây bắc.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Bưu điện Thành phố</h3><p>Kiến trúc Pháp cổ, đứng phía tây nam trung tâm.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Dinh Độc Lập</h3><p>Thấp và rộng, nằm ở khu nam thành phố.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Chợ Bến Thành</h3><p>Khu chợ lớn, nằm gần vòng đường phía tây nam.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Nhà hát Thành phố</h3><p>Công trình đẹp ở phía đông bắc, gần khu nhà cao tầng.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Tòa nhà Bitexco</h3><p>Tòa tháp cao nhất trong game, phía đông nam.</p><span class="tag-hcm">Quận 1</span></div>
+        <div class="card district"><h3>Sân bay</h3><p>Đường băng dài, nhà ga, nhà chứa máy bay và tháp kiểm soát không lưu.</p></div>
+        <div class="card district"><h3>Căn cứ quân sự</h3><p>Tường bao có cổng, nhà kho và tháp canh. Xe tăng xuất phát tại đây.</p></div>
+        <div class="card district"><h3>Trạm xe đạp</h3><p>Quảng trường có mái che, giá để xe và biển chỉ dẫn, phía nam thành phố.</p></div>
       </div>
     </div>
   </section>
 
   <section id="dieu-khien">
     <div class="wrap">
-      <h2>Điều khiển</h2>
+      <div class="eyebrow">Điều khiển</div>
+      <h2>Phím tắt</h2>
       <p class="lead">Mọi phím đều dùng được ngay từ đầu.</p>
       <div class="controls">
         <div class="key"><kbd>W</kbd><span>Ga / ngóc đầu (máy bay)</span></div>
@@ -217,15 +316,109 @@
     </div>
   </section>
 
-  <section id="tải-game" class="download">
+  <section id="cong-dong">
     <div class="wrap">
+      <div class="community">
+        <h3>Tham gia cộng đồng The Skyline</h3>
+        <p>Góp ý tính năng, báo lỗi, khoe ảnh chụp thành phố của bạn, và theo dõi các bản cập nhật mới nhất trên Discord.</p>
+        <a class="btn btn-discord" href="https://discord.gg/vuuuSrwRWw" target="_blank" rel="noopener">Tham gia Discord</a>
+        <a class="btn btn-ghost" href="https://github.com/MinhbaoGDVN/theskyline" target="_blank" rel="noopener">Theo dõi trên GitHub</a>
+      </div>
+    </div>
+  </section>
+
+  <section id="lo-trinh">
+    <div class="wrap">
+      <div class="eyebrow">Lộ trình</div>
+      <h2>Đang làm và sắp làm</h2>
+      <p class="lead">Lộ trình có thể thay đổi tùy theo phản hồi từ cộng đồng.</p>
+      <div class="roadmap">
+        <div class="rm"><div><div class="when">Đã xong</div><div class="done">✓ hoàn tất</div></div><ul>
+          <li>Phương tiện: ô tô, xe máy, máy bay, xe tăng</li>
+          <li>Hộp số 4 cấp, số tự động và thủ công</li>
+          <li>Bản đồ dạng dữ liệu JSON, phỏng theo Quận 1</li>
+          <li>Phá nhà bằng xe tăng, va chạm với xe NPC</li>
+          <li>Minimap, Discord Rich Presence, dev mode</li>
+        </ul></div>
+        <div class="rm"><div><div class="when">Đang làm</div></div><ul>
+          <li>Tối ưu hiệu năng render cho máy cấu hình thấp</li>
+          <li>Hoàn thiện mô hình xe và công trình</li>
+          <li>Thêm nhiều công trình và đường phố trong bản đồ</li>
+        </ul></div>
+        <div class="rm"><div><div class="when">Sắp tới</div></div><ul>
+          <li>Âm thanh động cơ và hiệu ứng nổ</li>
+          <li>Chế độ chơi tự do, nhiệm vụ đơn giản</li>
+          <li>Thêm phương tiện và khu vực mới</li>
+        </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="cap-nhat">
+    <div class="wrap">
+      <div class="eyebrow">Cập nhật</div>
+      <h2>Nhật ký thay đổi</h2>
+      <p class="lead">Các thay đổi gần đây nhất.</p>
+      <div class="changelog">
+        <div class="ver"><h3>v0.3.0</h3><div class="date">Phiên bản hiện tại</div><ul>
+          <li>Chuyển sang macroquad, chạy được trên Intel HD 4000</li>
+          <li>Bản đồ dạng dữ liệu JSON, thêm các công trình phỏng theo Quận 1</li>
+          <li>NPC đi theo mạng đường, rẽ ngẫu nhiên tại giao lộ</li>
+          <li>Hộp số, tốc độ hiển thị trên UI, Discord Rich Presence</li>
+          <li>Nhúng model, font và icon vào exe</li>
+        </ul></div>
+        <div class="ver"><h3>v0.2.0</h3><div class="date">Phiên bản cũ</div><ul>
+          <li>Thử nghiệm Bevy (không chạy được trên GPU tích hợp cũ)</li>
+          <li>Thêm model OBJ và bóng đổ phẳng</li>
+        </ul></div>
+      </div>
+    </div>
+  </section>
+
+  <section id="he-thong">
+    <div class="wrap">
+      <div class="eyebrow">Yêu cầu</div>
+      <h2>Cấu hình tối thiểu</h2>
+      <p class="lead">Game nhẹ, chạy được trên máy văn phòng đời cũ.</p>
+      <table class="specs">
+        <tr><th>Hệ điều hành</th><td>Windows 10 hoặc 11 (64-bit)</td></tr>
+        <tr><th>Đồ họa</th><td>OpenGL 3.3 trở lên (ví dụ Intel HD 4000)</td></tr>
+        <tr><th>CPU</th><td>2 nhân, từ Intel i5 đời 3 trở lên</td></tr>
+        <tr><th>RAM</th><td>4 GB</td></tr>
+        <tr><th>Dung lượng</th><td>Khoảng 20 MB (một file exe)</td></tr>
+        <tr><th>Tùy chọn</th><td>Discord đang mở, để hiển thị Rich Presence</td></tr>
+      </table>
+    </div>
+  </section>
+
+  <section id="faq">
+    <div class="wrap">
+      <div class="eyebrow">Hỏi đáp</div>
+      <h2>Câu hỏi thường gặp</h2>
+      <p class="lead">Nếu bạn chưa thấy câu trả lời, hỏi trên Discord.</p>
+      <div class="faq">
+        <details><summary>Game có miễn phí không?</summary><p>Có. Bạn có thể tải và chơi miễn phí.</p></details>
+        <details><summary>Vì sao Discord không hiện trạng thái chơi?</summary><p>Hãy mở Discord trước khi chạy game. Game sẽ tự thử kết nối lại mỗi 10 giây. Nếu VS Code cũng đang hiện Rich Presence, Discord chỉ hiện một cái tại một thời điểm.</p></details>
+        <details><summary>Máy bay rơi thì làm sao?</summary><p>Bấm R để hồi phục. Máy bay sẽ được đưa về vị trí trống gần nhất và quay mũi ra xa công trình.</p></details>
+        <details><summary>Chữ tiếng Việt bị lỗi thì sao?</summary><p>Font được nhúng sẵn trong exe, nên chữ có dấu nên hiển thị đúng. Nếu vẫn lỗi, báo cho nhóm trên Discord kèm ảnh chụp màn hình.</p></details>
+        <details><summary>Làm sao để sửa bản đồ?</summary><p>Mở file layout.json trong thư mục src. Mỗi công trình là một dòng với tọa độ, kích thước và chiều cao. Chỉ cần sửa rồi build lại.</p></details>
+        <details><summary>Tôi có thể đóng góp không?</summary><p>Có. Mã nguồn trên GitHub, và bạn có thể mở pull request hoặc góp ý trên Discord.</p></details>
+      </div>
+    </div>
+  </section>
+
+  <section id="tai-game" class="download">
+    <div class="wrap">
+      <div class="eyebrow">Tải về</div>
       <h2>Tải game</h2>
       <div class="box">
         <h3>The Skyline (Windows)</h3>
         <p>Tải file <strong>theskyline.exe</strong> và chạy trực tiếp. Không cần cài thêm gì.</p>
-        <a class="btn btn-primary" href="https://github.com/MinhbaoGDVN/theskyline/releases">Tải bản mới nhất</a>
-        <a class="btn btn-ghost" href="https://github.com/MinhbaoGDVN/theskyline">Mã nguồn trên GitHub</a>
+        <a class="btn btn-primary" href="https://github.com/MinhbaoGDVN/theskyline/releases" target="_blank" rel="noopener">Tải bản mới nhất</a>
+        <a class="btn btn-ghost" href="https://github.com/MinhbaoGDVN/theskyline" target="_blank" rel="noopener">Mã nguồn trên GitHub</a>
+        <a class="btn btn-discord" href="https://discord.gg/vuuuSrwRWw" target="_blank" rel="noopener">Discord</a>
         <div class="req">Yêu cầu: Windows 10/11, GPU hỗ trợ OpenGL 3.3 (đủ cho Intel HD 4000).</div>
+        <div class="warn">Lần đầu mở, Windows có thể hiện cảnh báo SmartScreen. Bấm "More info" rồi "Run anyway".</div>
       </div>
     </div>
   </section>
@@ -234,7 +427,11 @@
 <footer>
   <div class="wrap">
     <div>© MinhbaoGDVN · The Skyline</div>
-    <div><a href="https://github.com/MinhbaoGDVN/theskyline">GitHub</a></div>
+    <div class="links">
+      <a href="https://discord.gg/vuuuSrwRWw" target="_blank" rel="noopener">Discord</a>
+      <a href="https://github.com/MinhbaoGDVN/theskyline" target="_blank" rel="noopener">GitHub</a>
+      <a href="#faq">Hỏi đáp</a>
+    </div>
   </div>
 </footer>
 
